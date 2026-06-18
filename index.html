@@ -52,7 +52,7 @@
                     <input type="file" accept=".json" @change="handleFileUpload" class="hidden">
                 </label>
 
-                <button v-if="bins.length" @click="bins = []" 
+                <button v-if="bins.length" @click="showClearModal = true" 
                         class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md shadow-sm transition-colors text-sm">
                     Clear
                 </button>
@@ -104,7 +104,6 @@
                 
                 <form @submit.prevent="saveBin">
                     <div class="space-y-4 mb-6">
-                        
                         <div>
                             <div class="flex items-center gap-1.5 mb-1">
                                 <label class="text-sm font-medium text-gray-700">Bin ID *</label>
@@ -113,7 +112,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                     <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 hidden group-hover:block bg-gray-900 text-white text-xs p-2 rounded shadow-xl z-50 text-center font-normal pointer-events-none">
-                                        Unique container name or tag identifier.  This might be a label that you put on a box.  Please leave blank if you don't have one and one will the auto generated for you.
+                                        Unique container name or tag identifier. This might be a label that you put on a box. Please leave blank if you don't have one and one will the auto generated for you.
                                         <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                                     </div>
                                 </div>
@@ -214,6 +213,23 @@
             </div>
         </div>
 
+        <div v-if="showClearModal" class="fixed inset-0 z-40 bg-black/50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl relative select-none" @click.stop>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Clear Everything</h3>
+                <p class="text-gray-600 text-sm mb-6">Are you sure that you want to clear all of your stuff?</p>
+                <div class="flex justify-end gap-2">
+                    <button type="button" @click="showClearModal = false" 
+                            class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-medium text-sm">
+                        Cancel
+                    </button>
+                    <button type="button" @click="confirmClear" 
+                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors">
+                        Yes, Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -226,6 +242,7 @@
                 const selectedImage = ref(null);
                 
                 const showModal = ref(false);
+                const showClearModal = ref(false); // NEW: State variable
                 const isEditing = ref(false);
                 let activeEditingId = null;
 
@@ -242,6 +259,7 @@
                     if (e.key === 'Escape') {
                         selectedImage.value = null;
                         showModal.value = false;
+                        showClearModal.value = false;
                     }
                 };
 
@@ -292,6 +310,11 @@
                     }
 
                     showModal.value = false;
+                };
+
+                const confirmClear = () => {
+                    bins.value = [];
+                    showClearModal.value = false;
                 };
 
                 const downloadJson = () => {
@@ -359,11 +382,13 @@
                     filteredBins, 
                     selectedImage,
                     showModal,
+                    showClearModal,
                     isEditing,
                     formBin,
                     openAddModal,
                     openEditModal,
                     saveBin,
+                    confirmClear,
                     downloadJson,
                     handleFileUpload
                 };
