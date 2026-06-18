@@ -298,7 +298,7 @@
                     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bins.value, null, 4));
                     const downloadAnchor = document.createElement('a');
                     downloadAnchor.setAttribute("href", dataStr);
-                    downloadAnchor.setAttribute("download", `stuff-${new Date().toISOString().slice(0, 10)}.json`);
+                    downloadAnchor.setAttribute("download", `stuff-${new Date().toISOString()}.json`);
                     document.body.appendChild(downloadAnchor);
                     downloadAnchor.click();
                     downloadAnchor.remove();
