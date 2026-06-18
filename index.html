@@ -29,6 +29,15 @@
             </div>
         </header>
 
+        <div v-if="showDescription" class="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md shadow-sm relative flex justify-between items-start gap-4">
+            <p class="text-sm text-gray-600 leading-relaxed">
+                This site is a lightweight, web-based inventory management tool designed to track and organize your storage containers and their contents. It allows users to quickly search through items, visually map out exactly where a container is located down to the specific zone, rack, and shelf level, and effortlessly back up or update their entire setup via simple JSON file uploads and downloads.
+            </p>
+            <button @click="showDescription = false" class="text-gray-400 hover:text-gray-600 text-xl font-semibold leading-none p-1 transition-colors" title="Dismiss description">
+                &times;
+            </button>
+        </div>
+
         <div class="mb-6 flex flex-col md:flex-row gap-4 items-center">
             <div class="w-full md:flex-1">
                 <input type="text" v-model="searchQuery" placeholder="Search items or bins..." 
@@ -269,6 +278,7 @@
                 const showModal = ref(false);
                 const showClearModal = ref(false);
                 const binToDelete = ref(null);
+                const showDescription = ref(true);
                 
                 const isEditing = ref(false);
                 let activeEditingId = null;
@@ -326,7 +336,6 @@
                         }
                         attempts++;
                     }
-                    // Fallback timestamp if pool fills up
                     return `S-${Date.now().toString().slice(-3)}`;
                 };
 
@@ -342,13 +351,11 @@
                     const duplicateIndex = bins.value.findIndex(b => String(b.bin_id).trim().toLowerCase() === finalBinId.toLowerCase());
                     
                     if (isEditing.value) {
-                        // If editing, a duplicate is only a true error if it matches a DIFFERENT bin's ID
                         if (duplicateIndex !== -1 && bins.value[duplicateIndex].bin_id !== activeEditingId) {
                             alert(`The Bin ID "${finalBinId}" is already in use by another container. Please use a unique ID.`);
                             return;
                         }
                     } else {
-                        // If creating new, any match is a duplication error
                         if (duplicateIndex !== -1) {
                             alert(`A Bin with the ID "${finalBinId}" already exists. Please pick a unique name or leave it blank to auto-generate.`);
                             return;
@@ -464,6 +471,7 @@
                     showModal,
                     showClearModal,
                     binToDelete,
+                    showDescription,
                     isEditing,
                     formBin,
                     openAddModal,
