@@ -4,49 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Stuff</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 p-8">
 
-    <div id="app" class="max-w-6xl mx-auto">
+    <div class="max-w-6xl mx-auto">
         <header class="mb-8 flex justify-between items-end border-b pb-4">
             <div>
                 <h1 class="text-3xl font-bold text-gray-800">My Stuff</h1>
             </div>
             <div class="text-right flex items-center gap-3">
-                <button v-if="bins.length" @click="downloadJson" 
-                        class="bg-green-600 hover:bg-green-700 text-white font-medium py-1 px-3 rounded shadow-sm transition-colors text-xs flex items-center gap-1">
+                <button id="btn-download" class="hidden bg-green-600 hover:bg-green-700 text-white font-medium py-1 px-3 rounded shadow-sm transition-colors text-xs flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                     Download Stuff
                 </button>
-                <span v-if="bins.length" class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                    Total Bins: {{ bins.length }}
-                </span>
-                <span v-else class="text-gray-400 text-sm italic">No bins loaded.</span>
+                <div id="stats-container">
+                    <span class="text-gray-400 text-sm italic">No bins loaded.</span>
+                </div>
             </div>
         </header>
 
-        <div v-if="showDescription" class="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md shadow-sm relative flex justify-between items-start gap-4">
+        <div id="description-box" class="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md shadow-sm relative flex justify-between items-start gap-4">
             <p class="text-sm text-gray-600 leading-relaxed">
-                This site is a lightweight, web-based inventory management tool designed to track and organize your storage containers and their contents. It allows users to quickly search through items, visually map out exactly where a container is located down to the specific zone, rack, and shelf level, and effortlessly back up or update their entire setup via simple JSON file uploads and downloads.
+                This site is an inventory management tool designed to track and organize your storage containers and their contents. It allows you to quickly search through items, visually map out exactly where a container is located down to the specific zone, rack, and shelf level, and effortlessly back up your setup via file uploads and downloads.
             </p>
-            <button @click="showDescription = false" class="text-gray-400 hover:text-gray-600 text-xl font-semibold leading-none p-1 transition-colors" title="Dismiss description">
+            <button id="btn-close-desc" class="text-gray-400 hover:text-gray-600 text-xl font-semibold leading-none p-1 transition-colors" title="Dismiss description">
                 &times;
             </button>
         </div>
 
         <div class="mb-6 flex flex-col md:flex-row gap-4 items-center">
             <div class="w-full md:flex-1">
-                <input type="text" v-model="searchQuery" placeholder="Search items or bins..." 
+                <input type="text" id="search-query" placeholder="Search items or bins..." 
                        class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
             </div>
             
             <div class="flex gap-2 w-full md:w-auto shrink-0 justify-end">
-                <button @click="openAddModal" 
-                        class="bg-amber-500 hover:bg-amber-600 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-colors text-sm flex items-center gap-2">
+                <button id="btn-open-add" class="bg-amber-500 hover:bg-amber-600 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-colors text-sm flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
@@ -58,433 +54,419 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
                     Upload Stuff
-                    <input type="file" accept=".json" @change="handleFileUpload" class="hidden">
+                    <input type="file" id="file-upload" accept=".json" class="hidden">
                 </label>
 
-                <button v-if="bins.length" @click="showClearModal = true" 
-                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md shadow-sm transition-colors text-sm">
+                <button id="btn-clear-all" class="hidden bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md shadow-sm transition-colors text-sm">
                     Clear
                 </button>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div v-for="(bin, index) in filteredBins" :key="bin.bin_id" 
-                 class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-200">
-                
-                <img :src="bin.image || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=400&auto=format&fit=crop'" :alt="bin.bin_id" 
-                     @click="selectedImage = bin.image"
-                     class="w-full h-40 object-cover bg-gray-200 cursor-pointer hover:opacity-90 transition-opacity">
+        <div id="bins-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+    </div>
 
-                <div class="p-4">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h2 class="text-xl font-bold text-gray-800">Bin {{ bin.bin_id }}</h2>
-                            <p class="text-xs text-gray-400 uppercase tracking-tighter">
-                                Zone {{ bin.zone || 'N/A' }} / Rack {{ bin.rack || 'N/A' }} / Lvl {{ bin.level || 'N/A' }}
-                            </p>
-                        </div>
-                        
-                        <div class="flex items-center gap-1 shrink-0">
-                            <button @click="openEditModal(bin)" class="text-gray-400 hover:text-blue-600 p-1 rounded-md hover:bg-gray-100 transition-colors" title="Edit Bin">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    <div id="lightbox-modal" class="fixed inset-0 z-50 bg-black/90 hidden items-center justify-center p-4 cursor-zoom-out">
+        <img id="lightbox-img" src="" class="max-w-full max-h-full rounded shadow-2xl transition-transform duration-300">
+        <button class="absolute top-5 right-5 text-white text-4xl font-light">&times;</button>
+    </div>
+
+    <div id="form-modal" class="fixed inset-0 z-40 bg-black/50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl relative select-none">
+            <h3 id="modal-title" class="text-xl font-bold text-gray-900 mb-4">Add New Stuff</h3>
+            
+            <form id="bin-form">
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <div class="flex items-center gap-1.5 mb-1">
+                            <label class="text-sm font-medium text-gray-700">Bin ID</label>
+                            <div class="relative group flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 hover:text-gray-600 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                            </button>
-                            
-                            <button @click="confirmDeleteBin(bin)" class="text-gray-400 hover:text-red-600 p-1 rounded-md hover:bg-gray-100 transition-colors" title="Delete Bin">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
+                                <div class="absolute top-full left-0 mt-1 w-64 hidden group-hover:block bg-gray-900 text-white text-xs p-2 rounded shadow-xl z-50 text-left font-normal pointer-events-none">
+                                    Unique container name or tag identifier. Please leave blank to auto-generate.
+                                    <div class="absolute bottom-full left-1.5 border-4 border-transparent border-b-gray-900"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="text" id="form-bin-id" placeholder="Leave blank to auto-generate (e.g., S-102)"
+                               class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 block mb-1">Zone</label>
+                            <input type="text" id="form-zone" placeholder="LOFT" class="w-full p-2 border border-gray-300 rounded-md">
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 block mb-1">Rack</label>
+                            <input type="text" id="form-rack" placeholder="SHELF" class="w-full p-2 border border-gray-300 rounded-md">
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 block mb-1">Level</label>
+                            <input type="text" id="form-level" placeholder="1" class="w-full p-2 border border-gray-300 rounded-md">
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap gap-1">
-                        <span v-for="item in bin.contents" :key="item" 
-                              class="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-md border border-gray-200">
-                            {{ item }}
-                        </span>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 block mb-1">Image URL</label>
+                        <input type="url" id="form-image" placeholder="https://..." class="w-full p-2 border border-gray-300 rounded-md">
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 block mb-1">Contents *</label>
+                        <textarea id="form-contents" required placeholder="Screws, Tape, Hammer" rows="3"
+                                  class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div v-if="selectedImage" @click="selectedImage = null" class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-zoom-out">
-            <img :src="selectedImage" class="max-w-full max-h-full rounded shadow-2xl transition-transform duration-300">
-            <button class="absolute top-5 right-5 text-white text-4xl font-light">&times;</button>
-        </div>
-
-        <div v-if="showModal" class="fixed inset-0 z-40 bg-black/50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl relative select-none" @click.stop>
-                <h3 class="text-xl font-bold text-gray-900 mb-4">{{ isEditing ? 'Edit Stuff' : 'Add New Stuff' }}</h3>
-                
-                <form @submit.prevent="saveBin">
-                    <div class="space-y-4 mb-6">
-                        <div>
-                            <div class="flex items-center gap-1.5 mb-1">
-                                <label class="text-sm font-medium text-gray-700">Bin ID</label>
-                                <div class="relative group flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 hover:text-gray-600 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <div class="absolute top-full left-0 mt-1 w-64 hidden group-hover:block bg-gray-900 text-white text-xs p-2 rounded shadow-xl z-50 text-left font-normal pointer-events-none">
-                                        Unique container name or tag identifier. This might be a label that you put on a box. Please leave blank if you don't have one and one will be auto generated for you.
-                                        <div class="absolute bottom-full left-1.5 border-4 border-transparent border-b-gray-900"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <input type="text" v-model="formBin.bin_id" placeholder="Leave blank to auto-generate (e.g., S-102)"
-                                   class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-2">
-                            <div>
-                                <div class="flex items-center gap-1.5 mb-1">
-                                    <label class="text-sm font-medium text-gray-700">Zone</label>
-                                    <div class="relative group flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400 hover:text-gray-600 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <div class="absolute top-full left-0 mt-1 w-40 hidden group-hover:block bg-gray-900 text-white text-xs p-2 rounded shadow-xl z-50 text-left font-normal pointer-events-none">
-                                            Room, garage, area or warehouse section.
-                                            <div class="absolute bottom-full left-1.5 border-4 border-transparent border-b-gray-900"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <input type="text" v-model="formBin.zone" placeholder="LOFT" class="w-full p-2 border border-gray-300 rounded-md">
-                            </div>
-                            
-                            <div>
-                                <div class="flex items-center gap-1.5 mb-1">
-                                    <label class="text-sm font-medium text-gray-700">Rack</label>
-                                    <div class="relative group flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400 hover:text-gray-600 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <div class="absolute top-full left-0 mt-1 w-40 hidden group-hover:block bg-gray-900 text-white text-xs p-2 rounded shadow-xl z-50 text-left font-normal pointer-events-none">
-                                            Cupboard, shelf unit, column or bay number.
-                                            <div class="absolute bottom-full left-1.5 border-4 border-transparent border-b-gray-900"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <input type="text" v-model="formBin.rack" placeholder="SHELF" class="w-full p-2 border border-gray-300 rounded-md">
-                            </div>
-                            
-                            <div>
-                                <div class="flex items-center gap-1.5 mb-1">
-                                    <label class="text-sm font-medium text-gray-700">Level</label>
-                                    <div class="relative group flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400 hover:text-gray-600 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <div class="absolute top-full left-0 mt-1 w-40 hidden group-hover:block bg-gray-900 text-white text-xs p-2 rounded shadow-xl z-50 text-left font-normal pointer-events-none">
-                                            Cupboard number, shelf number or level number.
-                                            <div class="absolute bottom-full left-1.5 border-4 border-transparent border-b-gray-900"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <input type="text" v-model="formBin.level" placeholder="1" class="w-full p-2 border border-gray-300 rounded-md">
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="flex items-center gap-1.5 mb-1">
-                                <label class="text-sm font-medium text-gray-700">Image URL</label>
-                                <div class="relative group flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 hover:text-gray-600 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <div class="absolute top-full left-0 mt-1 w-64 hidden group-hover:block bg-gray-900 text-white text-xs p-2 rounded shadow-xl z-50 text-left font-normal pointer-events-none">
-                                        Web link to an image. Leave blank to apply a generic fallback icon.
-                                        <div class="absolute bottom-full left-1.5 border-4 border-transparent border-b-gray-900"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <input type="url" v-model="formBin.image" placeholder="https://..." class="w-full p-2 border border-gray-300 rounded-md">
-                        </div>
-
-                        <div>
-                            <div class="flex items-center gap-1.5 mb-1">
-                                <label class="text-sm font-medium text-gray-700">Contents *</label>
-                                <div class="relative group flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 hover:text-gray-600 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <div class="absolute top-full left-0 mt-1 w-64 hidden group-hover:block bg-gray-900 text-white text-xs p-2 rounded shadow-xl z-50 text-left font-normal pointer-events-none">
-                                        Separate item entries using commas. Commas split items into separate searchable index tags.
-                                        <div class="absolute bottom-full left-1.5 border-4 border-transparent border-b-gray-900"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <textarea v-model="formBin.contentsString" required placeholder="Screws, Tape, Hammer" rows="3"
-                                      class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end gap-2">
-                        <button type="button" @click="showModal = false" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-medium text-sm">Cancel</button>
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm">Save Changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div v-if="showClearModal" class="fixed inset-0 z-40 bg-black/50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl relative select-none" @click.stop>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">Clear Everything</h3>
-                <p class="text-gray-600 text-sm mb-6">Are you sure that you want to clear all of your stuff?</p>
                 <div class="flex justify-end gap-2">
-                    <button type="button" @click="showClearModal = false" 
-                            class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-medium text-sm">
-                        Cancel
-                    </button>
-                    <button type="button" @click="confirmClear" 
-                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors">
-                        Yes, Clear All
-                    </button>
+                    <button type="button" id="btn-close-modal" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-medium text-sm">Cancel</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm">Save Changes</button>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="clear-modal" class="fixed inset-0 z-40 bg-black/50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl relative select-none">
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Clear Everything</h3>
+            <p class="text-gray-600 text-sm mb-6">Are you sure that you want to clear all of your stuff?</p>
+            <div class="flex justify-end gap-2">
+                <button type="button" id="btn-close-clear" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-medium text-sm">Cancel</button>
+                <button type="button" id="btn-confirm-clear" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors">Yes, Clear All</button>
             </div>
         </div>
+    </div>
 
-        <div v-if="binToDelete" class="fixed inset-0 z-40 bg-black/50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl relative select-none" @click.stop>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">Delete Bin</h3>
-                <p class="text-gray-600 text-sm mb-6">Are you sure you want to delete <strong>Bin {{ binToDelete.bin_id }}</strong>?</p>
-                <div class="flex justify-end gap-2">
-                    <button type="button" @click="binToDelete = null" 
-                            class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-medium text-sm">
-                        Cancel
-                    </button>
-                    <button type="button" @click="deleteBin" 
-                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors">
-                        Delete
-                    </button>
-                </div>
+    <div id="delete-modal" class="fixed inset-0 z-40 bg-black/50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl relative select-none">
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Delete Bin</h3>
+            <p class="text-gray-600 text-sm mb-6">Are you sure you want to delete <strong id="delete-target-label">Bin</strong>?</p>
+            <div class="flex justify-end gap-2">
+                <button type="button" id="btn-close-delete" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-medium text-sm">Cancel</button>
+                <button type="button" id="btn-confirm-delete" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors">Delete</button>
             </div>
         </div>
-
     </div>
 
     <script>
-        const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
+        // --- 1. Global Application State Data Store ---
+        let bins = [];
+        let isEditing = false;
+        let activeEditingId = null;
+        let binToDelete = null;
 
-        createApp({
-            setup() {
-                const searchQuery = ref('');
-                const bins = ref([]);
-                const selectedImage = ref(null);
-                
-                const showModal = ref(false);
-                const showClearModal = ref(false);
-                const binToDelete = ref(null);
-                const showDescription = ref(true);
-                
-                const isEditing = ref(false);
-                let activeEditingId = null;
+        const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=400&auto=format&fit=crop";
 
-                const formBin = ref({
-                    bin_id: '',
-                    zone: '',
-                    rack: '',
-                    level: '',
-                    image: '',
-                    contentsString: ''
-                });
+        // --- 2. DOM Interface Component Selectors ---
+        const binsGrid = document.getElementById('bins-grid');
+        const searchQuery = document.getElementById('search-query');
+        const statsContainer = document.getElementById('stats-container');
+        const descriptionBox = document.getElementById('description-box');
+        
+        // Controls
+        const btnDownload = document.getElementById('btn-download');
+        const btnClearAll = document.getElementById('btn-clear-all');
+        const btnOpenAdd = document.getElementById('btn-open-add');
+        const btnCloseDesc = document.getElementById('btn-close-desc');
+        const fileUploadInput = document.getElementById('file-upload');
+        
+        // Modals
+        const formModal = document.getElementById('form-modal');
+        const clearModal = document.getElementById('clear-modal');
+        const deleteModal = document.getElementById('delete-modal');
+        const lightboxModal = document.getElementById('lightbox-modal');
+        
+        // Form Fields & Controls
+        const binForm = document.getElementById('bin-form');
+        const modalTitle = document.getElementById('modal-title');
+        const formBinId = document.getElementById('form-bin-id');
+        const formZone = document.getElementById('form-zone');
+        const formRack = document.getElementById('form-rack');
+        const formLevel = document.getElementById('form-level');
+        const formImage = document.getElementById('form-image');
+        const formContents = document.getElementById('form-contents');
 
-                const handleKeydown = (e) => {
-                    if (e.key === 'Escape') {
-                        selectedImage.value = null;
-                        showModal.value = false;
-                        showClearModal.value = false;
-                        binToDelete.value = null;
-                    }
-                };
+        // --- 3. Core Engine: Render Redraw Pipeline ---
+        function render() {
+            const query = searchQuery.value.trim().toLowerCase();
+            
+            // Filter data store entries
+            const filteredBins = bins.filter(bin => {
+                const binIdStr = String(bin.bin_id || '').toLowerCase();
+                const matchesBinId = binIdStr.includes(query);
+                const matchesContents = bin.contents && bin.contents.some(item => String(item).toLowerCase().includes(query));
+                return matchesBinId || matchesContents;
+            });
 
-                const openAddModal = () => {
-                    isEditing.value = false;
-                    activeEditingId = null;
-                    formBin.value = { bin_id: '', zone: '', rack: '', level: '', image: '', contentsString: '' };
-                    showModal.value = true;
-                };
-
-                const openEditModal = (bin) => {
-                    isEditing.value = true;
-                    activeEditingId = bin.bin_id;
-                    
-                    formBin.value = {
-                        bin_id: bin.bin_id,
-                        zone: bin.zone === 'N/A' ? '' : bin.zone,
-                        rack: bin.rack === 'N/A' ? '' : bin.rack,
-                        level: bin.level === 'N/A' ? '' : bin.level,
-                        image: bin.image.includes('images.unsplash.com') ? '' : bin.image,
-                        contentsString: bin.contents ? bin.contents.join(', ') : ''
-                    };
-                    showModal.value = true;
-                };
-
-                const generateUniqueBinId = () => {
-                    let attempts = 0;
-                    while (attempts < 1000) {
-                        const randomNum = Math.floor(100 + Math.random() * 900);
-                        const candidateId = `S-${randomNum}`;
-                        
-                        // Check if candidate ID is truly unique in current bin array
-                        const idExists = bins.value.some(b => String(b.bin_id).trim().toLowerCase() === candidateId.toLowerCase());
-                        if (!idExists) {
-                            return candidateId;
-                        }
-                        attempts++;
-                    }
-                    return `S-${Date.now().toString().slice(-3)}`;
-                };
-
-                const saveBin = () => {
-                    let finalBinId = formBin.value.bin_id.trim();
-
-                    // 1. Auto generate if blank
-                    if (!finalBinId) {
-                        finalBinId = generateUniqueBinId();
-                    }
-
-                    // 2. Uniqueness Validation
-                    const duplicateIndex = bins.value.findIndex(b => String(b.bin_id).trim().toLowerCase() === finalBinId.toLowerCase());
-                    
-                    if (isEditing.value) {
-                        if (duplicateIndex !== -1 && bins.value[duplicateIndex].bin_id !== activeEditingId) {
-                            alert(`The Bin ID "${finalBinId}" is already in use by another container. Please use a unique ID.`);
-                            return;
-                        }
-                    } else {
-                        if (duplicateIndex !== -1) {
-                            alert(`A Bin with the ID "${finalBinId}" already exists. Please pick a unique name or leave it blank to auto-generate.`);
-                            return;
-                        }
-                    }
-
-                    const contentsArray = formBin.value.contentsString
-                        .split(',')
-                        .map(item => item.trim())
-                        .filter(item => item.length > 0);
-
-                    const binRecord = {
-                        bin_id: finalBinId,
-                        zone: formBin.value.zone || "N/A",
-                        rack: formBin.value.rack || "N/A",
-                        level: formBin.value.level || "N/A",
-                        image: formBin.value.image || "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=400&auto=format&fit=crop",
-                        contents: contentsArray
-                    };
-
-                    if (isEditing.value) {
-                        const targetIndex = bins.value.findIndex(b => b.bin_id === activeEditingId);
-                        if (targetIndex !== -1) {
-                            bins.value[targetIndex] = binRecord;
-                        }
-                    } else {
-                        bins.value.unshift(binRecord);
-                    }
-
-                    showModal.value = false;
-                };
-
-                const confirmClear = () => {
-                    bins.value = [];
-                    showClearModal.value = false;
-                };
-
-                const confirmDeleteBin = (bin) => {
-                    binToDelete.value = bin;
-                };
-
-                const deleteBin = () => {
-                    if (binToDelete.value) {
-                        bins.value = bins.value.filter(b => b.bin_id !== binToDelete.value.bin_id);
-                        binToDelete.value = null;
-                    }
-                };
-
-                const downloadJson = () => {
-                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bins.value, null, 4));
-                    const downloadAnchor = document.createElement('a');
-                    downloadAnchor.setAttribute("href", dataStr);
-                    downloadAnchor.setAttribute("download", `stuff-${new Date().toISOString()}.json`);
-                    document.body.appendChild(downloadAnchor);
-                    downloadAnchor.click();
-                    downloadAnchor.remove();
-                };
-
-                const handleFileUpload = (event) => {
-                    const file = event.target.files[0];
-                    if (!file) return;
-
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        try {
-                            const parsedData = JSON.parse(e.target.result);
-                            if (Array.isArray(parsedData)) {
-                                bins.value = parsedData;
-                            } else {
-                                alert("Invalid JSON format.");
-                            }
-                        } catch (error) {
-                            alert("Failed to parse JSON file.");
-                        }
-                    };
-                    reader.readAsText(file);
-                };
-
-                const loadData = async () => {
-                    try {
-                        const response = await fetch('stuff.json');
-                        if (!response.ok) throw new Error();
-                        bins.value = await response.json();
-                    } catch (error) {
-                        console.log("No default stuff.json auto-loaded.");
-                    }
-                };
-
-                onMounted(() => {
-                    loadData();
-                    window.addEventListener('keydown', handleKeydown);
-                });
-
-                onUnmounted(() => {
-                    window.removeEventListener('keydown', handleKeydown);
-                });
-
-                const filteredBins = computed(() => {
-                    const q = searchQuery.value.toLowerCase();
-                    return bins.value.filter(bin => {
-                        const binIdStr = String(bin.bin_id || '').toLowerCase();
-                        const matchesBinId = binIdStr.includes(q);
-                        const matchesContents = bin.contents && bin.contents.some(item => String(item).toLowerCase().includes(q));
-                        return matchesBinId || matchesContents;
-                    });
-                });
-
-                return { 
-                    bins, 
-                    searchQuery, 
-                    filteredBins, 
-                    selectedImage,
-                    showModal,
-                    showClearModal,
-                    binToDelete,
-                    showDescription,
-                    isEditing,
-                    formBin,
-                    openAddModal,
-                    openEditModal,
-                    saveBin,
-                    confirmClear,
-                    confirmDeleteBin,
-                    deleteBin,
-                    downloadJson,
-                    handleFileUpload
-                };
+            // Update Control Toolbar visibilities dynamically
+            if (bins.length > 0) {
+                btnDownload.classList.remove('hidden');
+                btnClearAll.classList.remove('hidden');
+                statsContainer.innerHTML = `<span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">Total Bins: ${bins.length}</span>`;
+            } else {
+                btnDownload.classList.add('hidden');
+                btnClearAll.classList.add('hidden');
+                statsContainer.innerHTML = `<span class="text-gray-400 text-sm italic">No bins loaded.</span>`;
             }
-        }).mount('#app');
-    </script> 
+
+            // Repopulate Core HTML Grid Structure
+            if (filteredBins.length === 0) {
+                binsGrid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400 italic">No storage bins found matching selection.</div>`;
+                return;
+            }
+
+            binsGrid.innerHTML = filteredBins.map(bin => {
+                // Instantly sanitize any broken profile paths during string interpolation
+                const displayImg = (bin.image && bin.image.includes('googleusercontent.com') ? bin.image : FALLBACK_IMAGE);
+                console.log(displayImg);
+                // Map array string tags into template layouts
+                const tagsHtml = bin.contents.map(item => `
+                    <span class="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-md border border-gray-200">${item}</span>
+                `).join('');
+
+                return `
+                    <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-200">
+                        <img src="${displayImg}" alt="Bin ${bin.bin_id}" 
+                             onclick="openLightbox('${displayImg}')"
+                             onerror="this.onerror=null; this.src='${FALLBACK_IMAGE}';"
+                             class="w-full h-40 object-cover bg-gray-200 cursor-pointer hover:opacity-90 transition-opacity">
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-800">Bin ${bin.bin_id}</h2>
+                                    <p class="text-xs text-gray-400 uppercase tracking-tighter">
+                                        Zone ${bin.zone || 'N/A'} / Rack ${bin.rack || 'N/A'} / Lvl ${bin.level || 'N/A'}
+                                    </p>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <button onclick="openEditModal('${bin.bin_id}')" class="text-gray-400 hover:text-blue-600 p-1 rounded-md hover:bg-gray-100 transition-colors" title="Edit Bin">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </button>
+                                    <button onclick="triggerDeleteModal('${bin.bin_id}')" class="text-gray-400 hover:text-red-600 p-1 rounded-md hover:bg-gray-100 transition-colors" title="Delete Bin">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">${tagsHtml}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- 4. Helper Functions & Unique ID Generators ---
+        function generateUniqueBinId() {
+            let attempts = 0;
+            while (attempts < 1000) {
+                const randomNum = Math.floor(100 + Math.random() * 900);
+                const candidateId = `S-${randomNum}`;
+                const idExists = bins.some(b => String(b.bin_id).trim().toLowerCase() === candidateId.toLowerCase());
+                if (!idExists) return candidateId;
+                attempts++;
+            }
+            return `S-${Date.now().toString().slice(-3)}`;
+        }
+
+        // --- 5. Modal Display State Mutator Switches ---
+        btnOpenAdd.addEventListener('click', () => {
+            isEditing = false;
+            activeEditingId = null;
+            modalTitle.textContent = "Add New Stuff";
+            binForm.reset();
+            formBinId.disabled = false;
+            showElementModal(formModal);
+        });
+
+        window.openEditModal = function(binId) {
+            const bin = bins.find(b => b.bin_id === binId);
+            if (!bin) return;
+
+            isEditing = true;
+            activeEditingId = bin.bin_id;
+            modalTitle.textContent = "Edit Stuff";
+
+            const isPlaceholder = bin.image.includes('images.unsplash.com') || bin.image.includes('googleusercontent.com');
+
+            formBinId.value = bin.bin_id;
+            formZone.value = bin.zone === 'N/A' ? '' : bin.zone;
+            formRack.value = bin.rack === 'N/A' ? '' : bin.rack;
+            formLevel.value = bin.level === 'N/A' ? '' : bin.level;
+            formImage.value = isPlaceholder ? '' : bin.image;
+            formContents.value = bin.contents ? bin.contents.join(', ') : '';
+
+            showElementModal(formModal);
+        };
+
+        window.openLightbox = function(imgSrc) {
+            document.getElementById('lightbox-img').src = imgSrc;
+            showElementModal(lightboxModal);
+        };
+
+        window.triggerDeleteModal = function(binId) {
+            binToDelete = bins.find(b => b.bin_id === binId);
+            if (!binToDelete) return;
+            document.getElementById('delete-target-label').textContent = `Bin ${binToDelete.bin_id}`;
+            showElementModal(deleteModal);
+        };
+
+        btnClearAll.addEventListener('click', () => showElementModal(clearModal));
+
+        function showElementModal(modalNode) {
+            modalNode.classList.remove('hidden');
+            modalNode.classList.add('flex');
+        }
+
+        function closeAllModals() {
+            [formModal, clearModal, deleteModal, lightboxModal].forEach(m => {
+                m.classList.remove('flex');
+                m.classList.add('hidden');
+            });
+            binForm.reset();
+            binToDelete = null;
+        }
+
+        // Assign close handlers manually across nodes
+        document.getElementById('btn-close-modal').addEventListener('click', closeAllModals);
+        document.getElementById('btn-close-clear').addEventListener('click', closeAllModals);
+        document.getElementById('btn-close-delete').addEventListener('click', closeAllModals);
+        lightboxModal.addEventListener('click', closeAllModals);
+        btnCloseDesc.addEventListener('click', () => descriptionBox.remove());
+
+        // --- 6. Form Submission, Upload and Mutation Events ---
+        binForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            let finalBinId = formBinId.value.trim();
+
+            if (!finalBinId) {
+                finalBinId = generateUniqueBinId();
+            }
+
+            const duplicateIndex = bins.findIndex(b => String(b.bin_id).trim().toLowerCase() === finalBinId.toLowerCase());
+            
+            if (isEditing) {
+                if (duplicateIndex !== -1 && bins[duplicateIndex].bin_id !== activeEditingId) {
+                    alert(`The Bin ID "${finalBinId}" is already in use. Please use a unique ID.`);
+                    return;
+                }
+            } else {
+                if (duplicateIndex !== -1) {
+                    alert(`A Bin with ID "${finalBinId}" already exists. Please use a unique name.`);
+                    return;
+                }
+            }
+
+            const contentsArray = formContents.value
+                .split(',')
+                .map(item => item.trim())
+                .filter(item => item.length > 0);
+
+            const binRecord = {
+                bin_id: finalBinId,
+                zone: formZone.value.trim() || "N/A",
+                rack: formRack.value.trim() || "N/A",
+                level: formLevel.value.trim() || "N/A",
+                image: formImage.value.trim() || FALLBACK_IMAGE,
+                contents: contentsArray
+            };
+
+            if (isEditing) {
+                const targetIndex = bins.findIndex(b => b.bin_id === activeEditingId);
+                if (targetIndex !== -1) bins[targetIndex] = binRecord;
+            } else {
+                bins.unshift(binRecord);
+            }
+
+            closeAllModals();
+            render();
+        });
+
+        document.getElementById('btn-confirm-delete').addEventListener('click', () => {
+            if (binToDelete) {
+                bins = bins.filter(b => b.bin_id !== binToDelete.bin_id);
+                closeAllModals();
+                render();
+            }
+        });
+
+        document.getElementById('btn-confirm-clear').addEventListener('click', () => {
+            bins = [];
+            closeAllModals();
+            render();
+        });
+
+        // --- 7. Data Synchronization Mechanics (JSON Read/Write) ---
+        btnDownload.addEventListener('click', () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bins, null, 4));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `stuff-${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        });
+
+        // FIXED: Re-built file uploading pipeline to properly trigger data mutations and update the DOM layout grid
+        fileUploadInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const parsedData = JSON.parse(e.target.result);
+                    if (Array.isArray(parsedData)) {
+                        // Cast numeric database fields safely to strings on import execution
+                        bins = parsedData.map(bin => ({
+                            ...bin,
+                            level: bin.level !== undefined ? String(bin.level) : "N/A"
+                        }));
+                        
+                        // Explicitly redraw layout grid with new dataset profiles
+                        render();
+                    } else {
+                        alert("Invalid JSON data schema. File must be a JSON Array.");
+                    }
+                } catch (error) {
+                    alert("Failed to read JSON profile file cleanly.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input selection stream loop
+        });
+
+        // --- 8. Initialization Lifecycle Bootstrappers ---
+        async function loadInitialDatabase() {
+            try {
+                // Tries to look for an adjacent 'stuff.json' inside the same directory structure folder context
+                const response = await fetch('stuff.json');
+                if (!response.ok) throw new Error();
+                const rawData = await response.json();
+                bins = rawData.map(bin => ({
+                    ...bin,
+                    level: bin.level !== undefined ? String(bin.level) : "N/A"
+                }));
+            } catch (error) {
+                console.log("No default stuff.json auto-loaded. Ready for manual uploads.");
+            }
+            // Ensure UI displays current state after loading attempt completes
+            render();
+        }
+
+        // Handle Escape tracking key mechanics globally
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeAllModals();
+        });
+        searchQuery.addEventListener('input', render);
+
+        // Run application on complete engine bootstrap mapping
+        loadInitialDatabase();
+    </script>
 </body>
 </html>
