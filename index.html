@@ -152,7 +152,6 @@
     </div>
 
     <script>
-        // --- 1. Global Application State Data Store ---
         let bins = [];
         let isEditing = false;
         let activeEditingId = null;
@@ -160,26 +159,22 @@
 
         const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=400&auto=format&fit=crop";
 
-        // --- 2. DOM Interface Component Selectors ---
         const binsGrid = document.getElementById('bins-grid');
         const searchQuery = document.getElementById('search-query');
         const statsContainer = document.getElementById('stats-container');
         const descriptionBox = document.getElementById('description-box');
         
-        // Controls
         const btnDownload = document.getElementById('btn-download');
         const btnClearAll = document.getElementById('btn-clear-all');
         const btnOpenAdd = document.getElementById('btn-open-add');
         const btnCloseDesc = document.getElementById('btn-close-desc');
         const fileUploadInput = document.getElementById('file-upload');
         
-        // Modals
         const formModal = document.getElementById('form-modal');
         const clearModal = document.getElementById('clear-modal');
         const deleteModal = document.getElementById('delete-modal');
         const lightboxModal = document.getElementById('lightbox-modal');
         
-        // Form Fields & Controls
         const binForm = document.getElementById('bin-form');
         const modalTitle = document.getElementById('modal-title');
         const formBinId = document.getElementById('form-bin-id');
@@ -189,11 +184,9 @@
         const formImage = document.getElementById('form-image');
         const formContents = document.getElementById('form-contents');
 
-        // --- 3. Core Engine: Render Redraw Pipeline ---
         function render() {
             const query = searchQuery.value.trim().toLowerCase();
             
-            // Filter data store entries
             const filteredBins = bins.filter(bin => {
                 const binIdStr = String(bin.bin_id || '').toLowerCase();
                 const matchesBinId = binIdStr.includes(query);
@@ -201,7 +194,6 @@
                 return matchesBinId || matchesContents;
             });
 
-            // Update Control Toolbar visibilities dynamically
             if (bins.length > 0) {
                 btnDownload.classList.remove('hidden');
                 btnClearAll.classList.remove('hidden');
@@ -212,17 +204,13 @@
                 statsContainer.innerHTML = `<span class="text-gray-400 text-sm italic">No bins loaded.</span>`;
             }
 
-            // Repopulate Core HTML Grid Structure
             if (filteredBins.length === 0) {
                 binsGrid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400 italic">No storage bins found matching selection.</div>`;
                 return;
             }
 
             binsGrid.innerHTML = filteredBins.map(bin => {
-                // Instantly sanitize any broken profile paths during string interpolation
                 const displayImg = (bin.image && bin.image.includes('googleusercontent.com') ? bin.image : FALLBACK_IMAGE);
-                console.log(displayImg);
-                // Map array string tags into template layouts
                 const tagsHtml = bin.contents.map(item => `
                     <span class="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-md border border-gray-200">${item}</span>
                 `).join('');
@@ -261,7 +249,6 @@
             }).join('');
         }
 
-        // --- 4. Helper Functions & Unique ID Generators ---
         function generateUniqueBinId() {
             let attempts = 0;
             while (attempts < 1000) {
@@ -274,7 +261,6 @@
             return `S-${Date.now().toString().slice(-3)}`;
         }
 
-        // --- 5. Modal Display State Mutator Switches ---
         btnOpenAdd.addEventListener('click', () => {
             isEditing = false;
             activeEditingId = null;
@@ -332,14 +318,12 @@
             binToDelete = null;
         }
 
-        // Assign close handlers manually across nodes
         document.getElementById('btn-close-modal').addEventListener('click', closeAllModals);
         document.getElementById('btn-close-clear').addEventListener('click', closeAllModals);
         document.getElementById('btn-close-delete').addEventListener('click', closeAllModals);
         lightboxModal.addEventListener('click', closeAllModals);
         btnCloseDesc.addEventListener('click', () => descriptionBox.remove());
 
-        // --- 6. Form Submission, Upload and Mutation Events ---
         binForm.addEventListener('submit', (e) => {
             e.preventDefault();
             let finalBinId = formBinId.value.trim();
@@ -401,7 +385,6 @@
             render();
         });
 
-        // --- 7. Data Synchronization Mechanics (JSON Read/Write) ---
         btnDownload.addEventListener('click', () => {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bins, null, 4));
             const downloadAnchor = document.createElement('a');
@@ -412,7 +395,6 @@
             downloadAnchor.remove();
         });
 
-        // FIXED: Re-built file uploading pipeline to properly trigger data mutations and update the DOM layout grid
         fileUploadInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -422,13 +404,10 @@
                 try {
                     const parsedData = JSON.parse(e.target.result);
                     if (Array.isArray(parsedData)) {
-                        // Cast numeric database fields safely to strings on import execution
                         bins = parsedData.map(bin => ({
                             ...bin,
                             level: bin.level !== undefined ? String(bin.level) : "N/A"
-                        }));
-                        
-                        // Explicitly redraw layout grid with new dataset profiles
+                        }));                        
                         render();
                     } else {
                         alert("Invalid JSON data schema. File must be a JSON Array.");
@@ -438,10 +417,9 @@
                 }
             };
             reader.readAsText(file);
-            event.target.value = ''; // Reset input selection stream loop
+            event.target.value = '';
         });
 
-        // --- 8. Initialization Lifecycle Bootstrappers ---
         async function loadInitialDatabase() {
             try {
                 // Tries to look for an adjacent 'stuff.json' inside the same directory structure folder context
@@ -455,17 +433,14 @@
             } catch (error) {
                 console.log("No default stuff.json auto-loaded. Ready for manual uploads.");
             }
-            // Ensure UI displays current state after loading attempt completes
             render();
         }
 
-        // Handle Escape tracking key mechanics globally
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeAllModals();
         });
         searchQuery.addEventListener('input', render);
 
-        // Run application on complete engine bootstrap mapping
         loadInitialDatabase();
     </script>
 </body>
