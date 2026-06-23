@@ -307,7 +307,9 @@ fileUploadInput.addEventListener("change", (event) => {
 async function loadInitialDatabase() {
   try {
     // Tries to look for an adjacent 'stuff.json' inside the same directory structure folder context
-    const response = await fetch("stuff.json");
+    const baseUrl = import.meta.env.BASE_URL;
+    const response = await fetch(`${baseUrl}stuff.json`);      
+
     if (!response.ok) throw new Error();
     const rawData = await response.json();
     bins = rawData.map((bin) => ({
@@ -352,7 +354,8 @@ loadInitialDatabase();
     const { signal } = abortController;
 
     try {
-      const response = await fetch(`/version.json?cb=${Date.now()}`, {
+      const baseUrl = import.meta.env.BASE_URL; 
+      const response = await fetch(`${baseUrl}version.json?cb=${Date.now()}`, {
         signal,
       });
       if (!response.ok) throw new Error("Network response was not ok");
