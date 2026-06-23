@@ -1,3 +1,8 @@
+import { initVersionChecker } from './versionCheck';
+
+
+initVersionChecker();
+
 let bins = [];
 let isEditing = false;
 let activeEditingId = null;
@@ -328,112 +333,3 @@ window.addEventListener("keydown", (e) => {
 searchQuery.addEventListener("input", render);
 
 loadInitialDatabase();
-
-(function () {
-  const currentVersion = __APP_VERSION__;
-  console.log('App Version:', currentVersion);
-
-  let lastCheck = 0;
-  let abortController = null;
-
-  const checkServer = async () => {
-    console.log("Checking server for new version...");
-    const now = Date.now();
-    // Throttle checks to once every hour
-    if (now - lastCheck <  3600000) return;
-
-    // Set lastCheck immediately to properly throttle concurrent events
-    lastCheck = now;
-
-    // If there's an ongoing request, cancel it
-    if (abortController) {
-      abortController.abort();
-    }
-
-    abortController = new AbortController();
-    const { signal } = abortController;
-
-    try {
-      const baseUrl = import.meta.env.BASE_URL; 
-      const response = await fetch(`${baseUrl}version.json?cb=${Date.now()}`, {
-        signal,
-      });
-      if (!response.ok) throw new Error("Network response was not ok");
-
-      const data = await response.json();
-
-      if (data.version !== currentVersion) {
-        updateUI(data.version);
-      }
-    } catch (error) {
-      if (error.name === "AbortError") {
-        console.log("Fetch aborted: A newer request took over.");
-      } else {
-        console.error("Fetch error:", error);
-      }
-    } finally {
-      // Clear the controller if this was the latest one
-      if (abortController && abortController.signal === signal) {
-        abortController = null;
-      }
-    }
-  };
-
-  const handleReactivation = () => {
-    checkServer();
-  };
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      handleReactivation();
-    }
-  });
-
-  // Triggers when clicking back into the window from another app or monitor
-  window.addEventListener("pageshow", handleReactivation);
-  window.addEventListener("focus", handleReactivation);
-
-  const updateUI = (serverVersion) => {
-    const indicator = document.getElementById("version-status");
-    if (!indicator) {
-      console.warn(
-        "Version status indicator not found in DOM. Please ensure an element with id 'version-status' exists.",
-      );
-      return;
-    }
-
-    if (indicator) {
-      indicator.innerHTML = `
-      <button id="btn-update-version" class="bg-red-600 hover:bg-red-700 text-white font-medium py-1 px-3 rounded shadow-sm transition-colors text-xs flex items-center gap-1">
-        Click to update to new version of site
-      </button>
-    `;
-
-      const updateBtn = document.getElementById("btn-update-version");
-      if (updateBtn) {
-        updateBtn.addEventListener("click", () => {
-          const userConfirmed = confirm(
-            "Unsaved changes will be lost. Do you want to proceed with the update?",
-          );
-
-          if (userConfirmed) {
-            window.location.reload();
-          }
-        });
-      }
-    }
-  };
-
-  const observer = new MutationObserver(() => {
-    checkServer();
-  });
-
-  // Start observing once the DOM body is ready
-  if (document.body) {
-    observer.observe(document.body, { childList: true, subtree: true });
-  } else {
-    document.addEventListener("DOMContentLoaded", () => {
-      observer.observe(document.body, { childList: true, subtree: true });
-    });
-  }
-})();
