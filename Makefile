@@ -7,4 +7,5 @@ help: ## This help
 update-version: ## Update version.json with the current git hash
 	@echo "Updating version.json with git hash $(VERSION)"
 	@echo "{\"version\":\"$(VERSION)\"}" > dist/version.json
+	@echo "{\"version\":\"$(VERSION)\"}" > public/version.json
 
