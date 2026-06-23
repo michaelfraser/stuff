@@ -339,8 +339,8 @@ loadInitialDatabase();
   const checkServer = async () => {
     console.log("Checking server for new version...");
     const now = Date.now();
-    // Throttle checks to once every 10 seconds
-    if (now - lastCheck < 10000) return;
+    // Throttle checks to once every hour
+    if (now - lastCheck <  3600000) return;
 
     // Set lastCheck immediately to properly throttle concurrent events
     lastCheck = now;
