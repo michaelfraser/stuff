@@ -1,4 +1,6 @@
 img
+dist
+node_modules
 
 .vscode
-stuff.json
+public/stuff.json
