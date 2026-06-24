@@ -3,7 +3,7 @@ import {
   bins, setBins, setSearchFilter, getFilteredBins, 
   generateUniqueBinId, fetchInitialDatabase, FALLBACK_IMAGE 
 } from './store';
-import { els, showModal, closeAllModals } from './ui';
+import { els, showModal, closeAllModals, showInfo } from './ui';
 import { createBinCardHtml } from './templates';
 
 let isEditing = false;
@@ -121,11 +121,14 @@ document.getElementById("btn-confirm-clear").addEventListener("click", () => {
 els.btnDownload.addEventListener("click", () => {
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bins, null, 4));
   const dlAnchor = document.createElement("a");
+  const filename = `stuff-${new Date().toISOString()}.json`;
   dlAnchor.setAttribute("href", dataStr);
-  dlAnchor.setAttribute("download", `stuff-${new Date().toISOString()}.json`);
+  dlAnchor.setAttribute("download", filename);
   document.body.appendChild(dlAnchor);
   dlAnchor.click();
   dlAnchor.remove();
+
+  showInfo(`File downloaded successfully! (${filename})`);
 });
 
 document.getElementById("file-upload").addEventListener("change", (event) => {
