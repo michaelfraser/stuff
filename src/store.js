@@ -6,6 +6,28 @@ export const FALLBACK_IMAGE =
 
 export function setBins(newBins) {
   bins = newBins;
+
+  try {
+    // Local storage only stores strings, so we serialize the data
+    localStorage.setItem("bins", JSON.stringify(newBins));
+  } catch (error) {
+    // Log the full error to the console for developers
+    console.error("An error occurred while saving to localStorage:", error);
+
+    // Check if the error is specifically due to running out of space
+    if (
+      error.name === "QuotaExceededError" ||
+      error.name === "NS_ERROR_DOM_QUOTA_REACHED"
+    ) {
+      alert(
+        "Your changes were saved for this session, but your browser storage is full. Free up space or change your browser settings to permanently save your data.",
+      );
+    } else {
+      alert(
+        "An unexpected error occurred while trying to save your data permanently.",
+      );
+    }
+  }
 }
 
 export function setSearchFilter(query) {
@@ -17,7 +39,7 @@ export function getFilteredBins() {
   return bins.filter((bin) => {
     const binIdStr = String(bin.bin_id || "").toLowerCase();
     const matchesContents = bin.contents?.some((item) =>
-      String(item).toLowerCase().includes(searchFilter)
+      String(item).toLowerCase().includes(searchFilter),
     );
     return binIdStr.includes(searchFilter) || matchesContents;
   });
@@ -28,7 +50,9 @@ export function generateUniqueBinId() {
   while (attempts < 1000) {
     const randomNum = Math.floor(100 + Math.random() * 900);
     const candidateId = `S-${randomNum}`;
-    const exists = bins.some(b => String(b.bin_id).toLowerCase() === candidateId.toLowerCase());
+    const exists = bins.some(
+      (b) => String(b.bin_id).toLowerCase() === candidateId.toLowerCase(),
+    );
     if (!exists) return candidateId;
     attempts++;
   }
@@ -36,15 +60,6 @@ export function generateUniqueBinId() {
 }
 
 export async function fetchInitialDatabase() {
-  try {
-    const response = await fetch(`${import.meta.env.BASE_URL}stuff.json`);
-    if (!response.ok) throw new Error();
-    const data = await response.json();
-    bins = data.map(bin => ({
-      ...bin,
-      level: bin.level !== undefined ? String(bin.level) : "N/A"
-    }));
-  } catch {
-    console.log("No default stuff.json auto-loaded. Ready for manual uploads.");
-  }
+  let bins = JSON.parse(localStorage.getItem("bins")) || [];
+  setBins(bins);
 }
