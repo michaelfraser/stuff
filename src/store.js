@@ -36,12 +36,16 @@ export function setSearchFilter(query) {
 
 export function getFilteredBins() {
   if (!searchFilter) return bins;
+  console.log(bins, searchFilter);
   return bins.filter((bin) => {
-    const binIdStr = String(bin.bin_id || "").toLowerCase();
+    const binIdStr = "bin " + String(bin.bin_id || "").toLowerCase();
     const matchesContents = bin.contents?.some((item) =>
       String(item).toLowerCase().includes(searchFilter),
     );
-    return binIdStr.includes(searchFilter) || matchesContents;
+    if (searchFilter.startsWith("bin ")) {
+      return binIdStr === searchFilter;
+    } else 
+      return matchesContents;
   });
 }
 
